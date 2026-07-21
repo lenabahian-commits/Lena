@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Memory Match Game</title>
+
+    <!-- ========================================================= -->
+    <!-- 🎨 CSS SECTION (Nasa loob ng <style> tag)                 -->
+    <!-- ========================================================= -->
+    <style>
+        :root {
+            /* Light Mode Colors */
+            --bg-gradient: linear-gradient(180deg, #51c4ff 0%, #00d4ff 100%);
+            --card-back: #333333;
+            --card-front: #ffffff;
+            --button-bg: #ff9800;
+            --button-hover: #e68a00;
+            --text-color: #ffffff;
+            --level-btn-bg: rgba(255, 255, 255, 0.25);
+            --level-btn-active: #ffffff;
+            --panel-bg: rgba(255, 255, 255, 0.15);
+            --dark-toggle-bg: rgba(0, 0, 0, 0.2);
+        }
+
+        [data-theme="dark"] {
+            /* Sleek Dark Mode Colors */
+            --bg-gradient: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            --card-back: #475569;
+            --card-front: #1e293b;
+            --button-bg: #f97316;
+            --button-hover: #ea580c;
+            --text-color: #f8fafc;
+            --level-btn-bg: rgba(255, 255, 255, 0.1);
+            --level-btn-active: #f97316;
+            --panel-bg: rgba(0, 0, 0, 0.3);
+            --dark-toggle-bg: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .top-controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 5px;
+        }
+
+        .control-btn {
+            background: var(--dark-toggle-bg);
+            border: none;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        header {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        .level-btn {
+            background-color: var(--level-btn-bg);
+            color: white;
+            border: 2px solid white;
+            padding: 6px 14px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .level-btn.active {
+            background-color: var(--level-btn-active);
+            color: #00b4df;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .stats-panel {
+            background: var(--panel-bg);
+            border-radius: 12px;
+            padding: 10px 15px;
+            margin: 10px 0;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 1rem;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .restart-btn {
+            background-color: var(--button-bg);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            transition: background 0.2s, transform 0.1s;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 250px;
+        }
+
+        .restart-btn:hover {
+            background-color: var(--button-hover);
+        }
+
+        .restart-btn:active {
+            transform: scale(0.97);
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 400px;
+            width: 100%;
+            perspective: 1000px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            aspect-ratio: 1;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.4s ease;
+            cursor: pointer;
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            font-size: 2.3rem;
+            box-sizing: border-box;
+            user-select: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .level-2 .card-face { font-size: 2.1rem; }
+        .level-3 .card-face { font-size: 1.9rem; }
+
+        .card-back { background-color: var(--card-back); }
+
+        .card-front {
+            background-color: var(--card-front);
+            transform: rotateY(180deg);
+            border: 2px solid #ddd;
+        }
+
+        [data-theme="dark"] .card-front {
+            border: 2px solid #475569;
+            color: #ffffff;
+        }
+
+        .card.matched { pointer-events: none; }
+        .card.matched.flipped { transform: rotateY(180deg); }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ========================================================= -->
+    <!-- 📄 HTML SECTION (Mga Visual Elements sa Body)             -->
+    <!-- ========================================================= -->
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="top-controls">
+        <button class="control-btn" onclick="toggleTheme()">
+            <span id="theme-icon">🌙</span> <span id="theme-text">Dark Mode</span>
+        </button>
+        <button class="control-btn" onclick="toggleMute()">
+            <span id="mute-icon">🔊</span> Mute
+        </button>
+    </div>
+
+    <header>
+        <h1>🧠 Memory Match Game</h1>
+        
+        <div class="level-selector">
+            <button class="level-btn active" id="btn-lvl1" onclick="changeLevel(1)">Easy (Lvl 1)</button>
+            <button class="level-btn" id="btn-lvl2" onclick="changeLevel(2)">Medium (Lvl 2)</button>
+            <button class="level-btn" id="btn-lvl3" onclick="changeLevel(3)">Hard (Lvl 3)</button>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-box">
+                <span class="stat-label">Moves</span>
+                <span class="stat-value" id="moves">0</span>
+            </div>
+            <div class="stat-box">
+                <span class="stat-label">Time</span>
+                <span class="stat-value" id="timer">00:00</span>
+            </div>
+            <div class="stat-box" style="grid-column: span 2; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 5px; margin-top: 5px;">
+                <span class="stat-label" style="font-size: 0.75rem;">🏆 Best Personal Record (<span id="record-lvl-label">Easy</span>)</span>
+                <span class="stat-value" id="best-score" style="font-size: 1rem;">No record yet</span>
+            </div>
+        </div>
+
+        <button class="restart-btn" onclick="resetGame()">Restart Game</button>
+    </header>
+
+    <!-- Dito dynamic na ipinapasok ng JavaScript ang mga card -->
+    <div class="game-grid" id="grid"></div>
+
+
+    <!-- ========================================================= -->
+    <!-- ⚡ JAVASCRIPT SECTION (Nasa loob ng <script> tag)         -->
+    <!-- ========================================================= -->
+    <script>
+        // --- 1. Global Variables / Game States ---
+        const level1Emojis = ["🍑", "🍏", "🍕", "🥑", "🍓", "🍔", "🍦", "🍩"]; 
+        const level2Emojis = ["🍑", "🍏", "🍕", "🥑", "🍓", "🍔", "🍦", "🍩", "🍉", "🍒"]; 
+        const level3Emojis = ["🍑", "🍏", "🍕", "🥑", "🍓", "🍔", "🍦", "🍩", "🍉", "🍒", "🍇", "🍟"]; 
+
+        let currentLevel = 1;
+        let activeEmojis = [...level1Emojis];
+        let cards = [];
+        let flippedCards = [];
+        let lockBoard = false;
+        
+        let moves = 0;
+        let matchedPairs = 0;
+        let timerInterval = null;
+        let secondsElapsed = 0;
+        let isGameStarted = false;
+        let isMuted = false;
+        let audioCtx = null;
+
+        // --- DOM Elements ---
+        const gridContainer = document.getElementById('grid');
+        const movesDisplay = document.getElementById('moves');
+        const timerDisplay = document.getElementById('timer');
+        const bestScoreDisplay = document.getElementById('best-score');
+        const recordLvlLabel = document.getElementById('record-lvl-label');
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let confettiPieces = [];
+        let confettiAnimationId = null;
+
+        // --- 2. Audio Functions (Web Audio API) ---
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                const ctxAudio = getAudioContext();
+                const osc = ctxAudio.createOscillator();
+                const gain = ctxAudio.createGain();
+                osc.connect(gain);
+                gain.connect(ctxAudio.destination);
+                const now = ctxAudio.currentTime;
+
+                if (type === 'flip') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(150, now + 0.1);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'match') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(523.25, now); 
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); 
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                } else if (type === 'fail') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(246.94, now); 
+                    osc.frequency.exponentialRampToValueAtTime(196.00, now + 0.25); 
+                    gain.gain.setValueAtTime(0.08, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'win') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; 
+                    notes.forEach((freq, index) => {
+                        const o = ctxAudio.createOscillator();
+                        const g = ctxAudio.createGain();
+                        o.connect(g);
+                        g.connect(ctxAudio.destination);
+                        o.type = 'sine';
+                        o.frequency.setValueAtTime(freq, now + index * 0.12);
+                        g.gain.setValueAtTime(0.15, now + index * 0.12);
+                        g.gain.exponentialRampToValueAtTime(0.01, now + index * 0.12 + 0.25);
+                        o.start(now + index * 0.12);
+                        o.stop(now + index * 0.12 + 0.3);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio Error");
+            }
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('mute-icon').textContent = isMuted ? "🔇" : "🔊";
+        }
+
+        // --- 3. Theme Functions (Dark / Light Mode) ---
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            let targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', targetTheme);
+            localStorage.setItem('memory-game-theme', targetTheme);
+            
+            document.getElementById('theme-icon').textContent = targetTheme === 'dark' ? "☀️" : "🌙";
+            document.getElementById('theme-text').textContent = targetTheme === 'dark' ? "Light Mode" : "Dark Mode";
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('memory-game-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            document.getElementById('theme-icon').textContent = savedTheme === 'dark' ? "☀️" : "🌙";
+            document.getElementById('theme-text').textContent = savedTheme === 'dark' ? "Light Mode" : "Dark Mode";
+        }
+
+        // --- 4. Timer & High Score Functions ---
+        function startTimer() {
+            if (isGameStarted) return;
+            isGameStarted = true;
+            secondsElapsed = 0;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            isGameStarted = false;
+        }
+
+        function updateTimerDisplay() {
+            const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+            const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${mins}:${secs}`;
+        }
+
+        function checkAndSaveHighScore() {
+            const recordKey = `best_lvl_${currentLevel}`;
+            const currentRecord = JSON.parse(localStorage.getItem(recordKey));
+
+            if (!currentRecord || moves < currentRecord.moves || (moves === currentRecord.moves && secondsElapsed < currentRecord.time)) {
+                const newRecord = { moves: moves, time: secondsElapsed };
+                localStorage.setItem(recordKey, JSON.stringify(newRecord));
+                displayHighScore();
+                return true; 
+            }
+            return false;
+        }
+
+        function displayHighScore() {
+            const levelNames = ["", "Easy", "Medium", "Hard"];
+            recordLvlLabel.textContent = levelNames[currentLevel];
+            const recordKey = `best_lvl_${currentLevel}`;
+            const record = JSON.parse(localStorage.getItem(recordKey));
+
+            if (record) {
+                const mins = Math.floor(record.time / 60).toString().padStart(2, '0');
+                const secs = (record.time % 60).toString().padStart(2, '0');
+                bestScoreDisplay.textContent = `${record.moves} Moves (${mins}:${secs})`;
+            } else {
+                bestScoreDisplay.textContent = "No record yet";
+            }
+        }
+
+        // --- 5. Confetti Animation Functions ---
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        function triggerConfetti() {
+            resizeCanvas();
+            confettiPieces = [];
+            const colors = ['#ffd700', '#ff4081', '#00e5ff', '#76ff03', '#ff9100'];
+            
+            for (let i = 0; i < 150; i++) {
+                confettiPieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    speedY: Math.random() * 3 + 2,
+                    speedX: Math.random() * 2 - 1,
+                    rotation: Math.random() * 360,
+                    rotationSpeed: Math.random() * 4 - 2
+                });
+            }
+            animateConfetti();
+            setTimeout(() => {
+                cancelAnimationFrame(confettiAnimationId);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }, 4000);
+        }
+
+        function animateConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            confettiPieces.forEach((p) => {
+                p.y += p.speedY; p.x += p.speedX; p.rotation += p.rotationSpeed;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate((p.rotation * Math.PI) / 180);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                ctx.restore();
+            });
+            confettiAnimationId = requestAnimationFrame(animateConfetti);
+        }
+
+        // --- 6. Core Game Logic Functions ---
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        function changeLevel(level) {
+            currentLevel = level;
+            document.getElementById('btn-lvl1').classList.toggle('active', level === 1);
+            document.getElementById('btn-lvl2').classList.toggle('active', level === 2);
+            document.getElementById('btn-lvl3').classList.toggle('active', level === 3);
+            
+            gridContainer.className = 'game-grid';
+            if (level === 1) { activeEmojis = [...level1Emojis]; } 
+            else if (level === 2) { gridContainer.classList.add('level-2'); activeEmojis = [...level2Emojis]; } 
+            else if (level === 3) { gridContainer.classList.add('level-3'); activeEmojis = [...level3Emojis]; }
+            
+            displayHighScore();
+            initGame();
+        }
+
+        function initGame() {
+            stopTimer();
+            gridContainer.innerHTML = '';
+            flippedCards = [];
+            lockBoard = false;
+            moves = 0; matchedPairs = 0; secondsElapsed = 0;
+            movesDisplay.textContent = moves;
+            updateTimerDisplay();
+            displayHighScore();
+
+            const cardData = [...activeEmojis, ...activeEmojis];
+            cards = shuffle(cardData);
+
+            cards.forEach((emoji) => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.emoji = emoji;
+                card.innerHTML = `
+                    <div class="card-face card-back"></div>
+                    <div class="card-face card-front">${emoji}</div>
+                `;
+                card.addEventListener('click', () => flipCard(card));
+                gridContainer.appendChild(card);
+            });
+        }
+
+        function flipCard(card) {
+            if (lockBoard) return;
+            if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+            if (!isGameStarted) startTimer();
+
+            playSound('flip');
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) checkForMatch();
+        }
+
+        function checkForMatch() {
+            lockBoard = true;
+            moves++;
+            movesDisplay.textContent = moves;
+
+            const [card1, card2] = flippedCards;
+            const isMatch = card1.dataset.emoji === card2.dataset.emoji;
+
+            if (isMatch) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                playSound('match');
+
+                if (matchedPairs === activeEmojis.length) {
+                    stopTimer();
+                    const isNewRecord = checkAndSaveHighScore();
+                    playSound('win');
+                    triggerConfetti();
+
+                    setTimeout(() => {
+                        const mins = Math.floor(secondsElapsed / 60).toString().padStart(2, '0');
+                        const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+                        let levelName = currentLevel === 1 ? "Easy" : currentLevel === 2 ? "Medium" : "Hard";
+                        let message = `Natapos mo ang ${levelName} Level sa loob ng ${moves} moves at ${mins}:${secs} na oras! 🏆`;
+                        
+                        if (isNewRecord) message += `\n\n🎉 WOW! Bagong Personal Record! 🎉`;
+
+                        if (currentLevel === 1) {
+                            message += `\n\nI-click ang OK para lumipat sa Medium Level! 🚀`;
+                            alert(message); changeLevel(2); 
+                        } else if (currentLevel === 2) {
+                            message += `\n\nI-click ang OK para sa huling hamon: Hard Level! 🔥`;
+                            alert(message); changeLevel(3); 
+                        } else {
+                            message = `CONGRATULATIONS! 🏆🏆🏆\n\nNatapos mo ang lahat ng levels (hanggang Hard Level) sa loob ng ${moves} moves!\n\nIkaw na ang opisyal na Memory Match Master!`;
+                            alert(message);
+                        }
+                    }, 500);
+                }
+                resetTurn();
+            } else {
+                playSound('fail');
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    resetTurn();
+                }, 1000);
+            }
+        }
+
+        function resetTurn() {
+            flippedCards = [];
+            lockBoard = false;
+        }
+
+        function resetGame() {
+            initGame();
+        }
+
+        // --- 7. Event Listeners / Initial Load ---
+        window.addEventListener('resize', resizeCanvas);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTheme();
+            initGame();
+        });
+    </script>
+</body>
+</html>
